@@ -1,21 +1,21 @@
 
-/* ==========================================
+/* =================================================
    JANA COMMUNICATION
-   Professional CSC & Cyber Cafe Website
-   FINAL JAVASCRIPT
-========================================== */
+   PROFESSIONAL CSC & CYBER CAFE WEBSITE
+   FINAL JAVASCRIPT VERSION
+================================================= */
 
-// GOOGLE SHEETS CONNECTION
+// GOOGLE APPS SCRIPT URL
 const GOOGLE_SCRIPT_URL =
 "https://script.google.com/macros/s/AKfycbx-r5-RdiiBt60jQZ6bAryBh1_abN6SLDfDp2XNVDye6ULKbrzy1eCBOM3ONXTHQY7T/exec";
 
-// WHATSAPP NUMBER
+// WHATSAPP BUSINESS NUMBER
 const WHATSAPP_NUMBER = "917063643489";
 
 
-/* ==========================================
+/* =================================================
    MOBILE NAVIGATION
-========================================== */
+================================================= */
 
 const menuToggle = document.getElementById("menuToggle");
 const mainNav = document.getElementById("mainNav");
@@ -27,19 +27,17 @@ if (menuToggle && mainNav) {
     });
 
     mainNav.querySelectorAll("a").forEach(function (link) {
-
         link.addEventListener("click", function () {
             mainNav.classList.remove("open");
         });
-
     });
 
 }
 
 
-/* ==========================================
-   AUTOMATIC COPYRIGHT YEAR
-========================================== */
+/* =================================================
+   COPYRIGHT YEAR
+================================================= */
 
 const yearElement = document.getElementById("year");
 
@@ -48,44 +46,94 @@ if (yearElement) {
 }
 
 
-/* ==========================================
-   WHATSAPP BOOKING FUNCTION
-========================================== */
+/* =================================================
+   STATUS MESSAGE
+================================================= */
+
+function showStatus(message, type = "normal") {
+
+    const status = document.getElementById("formStatus");
+
+    if (!status) return;
+
+    status.textContent = message;
+
+    status.className = "form-status";
+
+    if (type === "success") {
+        status.classList.add("success");
+    }
+
+    if (type === "error") {
+        status.classList.add("error");
+    }
+
+}
+
+
+/* =================================================
+   MOBILE NUMBER NORMALIZATION
+================================================= */
+
+function normalizeMobile(value) {
+
+    let mobile = String(value || "").trim();
+
+    // Remove spaces, +, hyphens and other non-digits
+    mobile = mobile.replace(/\D/g, "");
+
+    // Remove India country code
+    if (mobile.length === 12 && mobile.startsWith("91")) {
+        mobile = mobile.slice(2);
+    }
+
+    // Remove leading zero
+    if (mobile.length === 11 && mobile.startsWith("0")) {
+        mobile = mobile.slice(1);
+    }
+
+    return mobile;
+
+}
+
+
+/* =================================================
+   WHATSAPP BOOKING
+================================================= */
 
 function sendWhatsAppBooking(data) {
 
-    const message =
-`JANA COMMUNICATION - NEW BOOKING
+    const message = `
+JANA COMMUNICATION
+NEW BOOKING REQUEST
 
 Customer Name: ${data.name}
 Mobile Number: ${data.mobile}
-Service Required: ${data.service}
-Preferred Date: ${data.bookingDate || "Not specified"}
-Preferred Time: ${data.bookingTime || "Not specified"}
+Service: ${data.service}
+Booking Date: ${data.bookingDate || "Not specified"}
+Booking Time: ${data.bookingTime || "Not specified"}
 Address: ${data.address || "Not specified"}
-Additional Details: ${data.message || "None"}
+Details: ${data.message || "None"}
 
-Thank you.`;
+Thank you.
+`;
 
-    const whatsappURL =
+    const url =
         "https://wa.me/" +
         WHATSAPP_NUMBER +
         "?text=" +
         encodeURIComponent(message);
 
-    window.open(whatsappURL, "_blank", "noopener");
+    window.open(url, "_blank", "noopener");
 
 }
 
 
-/* ==========================================
-   ONLINE BOOKING FORM
-========================================== */
+/* =================================================
+   BOOKING FORM
+================================================= */
 
 const bookingForm = document.getElementById("bookingForm");
-
-const formStatus = document.getElementById("formStatus");
-
 
 if (bookingForm) {
 
@@ -93,22 +141,19 @@ if (bookingForm) {
 
         event.preventDefault();
 
-        // FORM VALIDATION
-        if (!bookingForm.reportValidity()) {
-            return;
-        }
-
         const submitButton =
             bookingForm.querySelector('button[type="submit"]');
 
+        if (submitButton.disabled) return;
+
+        // Read form fields
         const formData = new FormData(bookingForm);
 
-        // COLLECT BOOKING INFORMATION
         const data = {
 
             name: String(formData.get("name") || "").trim(),
 
-            mobile: String(formData.get("mobile") || "").trim(),
+            mobile: normalizeMobile(formData.get("mobile")),
 
             service: String(formData.get("service") || "").trim(),
 
@@ -123,7 +168,7 @@ if (bookingForm) {
         };
 
 
-        // VALIDATE CUSTOMER NAME
+        // NAME VALIDATION
         if (!data.name) {
 
             showStatus("Please enter your full name.", "error");
@@ -133,11 +178,11 @@ if (bookingForm) {
         }
 
 
-        // VALIDATE MOBILE NUMBER
-        if (!/^[0-9]{10}$/.test(data.mobile)) {
+        // MOBILE VALIDATION
+        if (!/^[6-9][0-9]{9}$/.test(data.mobile)) {
 
             showStatus(
-                "Please enter a valid 10-digit mobile number.",
+                "Please enter a valid 10-digit Indian mobile number.",
                 "error"
             );
 
@@ -146,7 +191,7 @@ if (bookingForm) {
         }
 
 
-        // VALIDATE SERVICE
+        // SERVICE VALIDATION
         if (!data.service) {
 
             showStatus("Please select a service.", "error");
@@ -156,22 +201,20 @@ if (bookingForm) {
         }
 
 
-        // PREVENT DOUBLE SUBMISSION
+        // PREVENT DUPLICATE SUBMISSION
         submitButton.disabled = true;
 
-        submitButton.textContent = "Submitting Booking...";
+        submitButton.textContent = "Submitting...";
 
         showStatus(
-            "Please wait. Your booking request is being submitted...",
+            "Please wait. Sending your booking request...",
             "normal"
         );
 
 
         try {
 
-            // SEND DATA TO GOOGLE APPS SCRIPT
-            // no-cors mode is used for cross-origin submission.
-            // Browser cannot read Google's response in this mode.
+            // GOOGLE SHEETS SUBMISSION
 
             await fetch(GOOGLE_SCRIPT_URL, {
 
@@ -180,9 +223,7 @@ if (bookingForm) {
                 mode: "no-cors",
 
                 headers: {
-
                     "Content-Type": "text/plain;charset=utf-8"
-
                 },
 
                 body: JSON.stringify(data)
@@ -190,26 +231,39 @@ if (bookingForm) {
             });
 
 
-            // REQUEST SENT, BUT SHEET ENTRY IS NOT VERIFIED
+            // Browser cannot read the response in no-cors mode.
+            // Therefore, successful delivery to the Sheet
+            // must be checked manually.
+
             showStatus(
-                "Booking request sent. Please contact us on WhatsApp or phone to confirm your booking.",
+                "Booking request sent. Please verify your booking with JANA COMMUNICATION by phone or WhatsApp.",
                 "success"
             );
 
-            // RESET FORM
+
+            // Reset form
             bookingForm.reset();
 
 
-            // CREATE WHATSAPP FOLLOW-UP LINK
-            const whatsappButton = document.createElement("button");
+            // WhatsApp follow-up button
+            const oldButton =
+                document.getElementById("whatsappFollowup");
+
+            if (oldButton) oldButton.remove();
+
+            const whatsappButton =
+                document.createElement("button");
+
+            whatsappButton.id = "whatsappFollowup";
 
             whatsappButton.type = "button";
 
             whatsappButton.className = "btn btn-primary";
 
-            whatsappButton.textContent = "Also Send Booking on WhatsApp";
-
             whatsappButton.style.marginTop = "12px";
+
+            whatsappButton.textContent =
+                "Send Booking through WhatsApp";
 
             whatsappButton.addEventListener("click", function () {
 
@@ -217,28 +271,24 @@ if (bookingForm) {
 
             });
 
-            if (formStatus) {
+            const status =
+                document.getElementById("formStatus");
 
-                formStatus.appendChild(document.createElement("br"));
-
-                formStatus.appendChild(whatsappButton);
-
+            if (status) {
+                status.appendChild(document.createElement("br"));
+                status.appendChild(whatsappButton);
             }
 
 
         } catch (error) {
 
-            console.error(
-                "JANA COMMUNICATION Booking Error:",
-                error
-            );
+            console.error("Booking Error:", error);
 
             showStatus(
-                "Online booking could not be submitted. Please book through WhatsApp.",
+                "Online booking could not be confirmed. Please use WhatsApp booking.",
                 "error"
             );
 
-            // WHATSAPP FALLBACK
             sendWhatsAppBooking(data);
 
         } finally {
@@ -255,31 +305,6 @@ if (bookingForm) {
 }
 
 
-/* ==========================================
-   FORM STATUS MESSAGE
-========================================== */
-
-function showStatus(message, type) {
-
-    if (!formStatus) return;
-
-    formStatus.textContent = message;
-
-    formStatus.className = "form-status";
-
-    if (type === "success") {
-
-        formStatus.classList.add("success");
-
-    } else if (type === "error") {
-
-        formStatus.classList.add("error");
-
-    }
-
-}
-
-
-/* ==========================================
-   END OF JANA COMMUNICATION JAVASCRIPT
-========================================== */
+/* =================================================
+   END OF JANA COMMUNICATION SCRIPT
+================================================= */
