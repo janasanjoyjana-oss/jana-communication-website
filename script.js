@@ -1,6 +1,7 @@
 // JANA COMMUNICATION website interactions
 // Add your deployed Google Apps Script Web App URL below to enable Google Sheets booking.
-const GOOGLE_SCRIPT_URL = ""; // Example: https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-r5-RdiiBt60jQZ6bAryBh1_abN6SLDfDp2XNVDye6ULKbrzy1eCBOM3ONXTHQY7T/exec";
+// Example: https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
 const WHATSAPP_NUMBER = "917063643489";
 
 const menuToggle = document.getElementById("menuToggle");
