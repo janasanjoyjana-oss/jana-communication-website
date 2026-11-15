@@ -1,70 +1,285 @@
-// JANA COMMUNICATION website interactions
-// Add your deployed Google Apps Script Web App URL below to enable Google Sheets booking.
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-r5-RdiiBt60jQZ6bAryBh1_abN6SLDfDp2XNVDye6ULKbrzy1eCBOM3ONXTHQY7T/exec";
-// Example: https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
+
+/* ==========================================
+   JANA COMMUNICATION
+   Professional CSC & Cyber Cafe Website
+   FINAL JAVASCRIPT
+========================================== */
+
+// GOOGLE SHEETS CONNECTION
+const GOOGLE_SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycbx-r5-RdiiBt60jQZ6bAryBh1_abN6SLDfDp2XNVDye6ULKbrzy1eCBOM3ONXTHQY7T/exec";
+
+// WHATSAPP NUMBER
 const WHATSAPP_NUMBER = "917063643489";
+
+
+/* ==========================================
+   MOBILE NAVIGATION
+========================================== */
 
 const menuToggle = document.getElementById("menuToggle");
 const mainNav = document.getElementById("mainNav");
-menuToggle.addEventListener("click", () => {
-  const open = mainNav.classList.toggle("open");
-  menuToggle.setAttribute("aria-expanded", String(open));
-  menuToggle.textContent = open ? "×" : "☰";
-});
-mainNav.querySelectorAll("a").forEach(link => link.addEventListener("click", () => {
-  mainNav.classList.remove("open");
-  menuToggle.setAttribute("aria-expanded", "false");
-  menuToggle.textContent = "☰";
-}));
-document.getElementById("year").textContent = new Date().getFullYear();
 
-const form = document.getElementById("bookingForm");
-const statusBox = document.getElementById("formStatus");
-function getBookingData() {
-  const data = Object.fromEntries(new FormData(form).entries());
-  data.submittedAt = new Date().toISOString();
-  return data;
-}
-function bookingMessage(data) {
-  return `নমস্কার JANA COMMUNICATION,\nআমি একটি পরিষেবা বুক করতে চাই।\nনাম: ${data.name}\nমোবাইল: ${data.phone}\nপরিষেবা: ${data.service}\nপছন্দের তারিখ: ${data.date || "নির্দিষ্ট নয়"}\nঅতিরিক্ত তথ্য: ${data.message || "নেই"}`;
-}
-function openWhatsApp(data) {
-  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(bookingMessage(data))}`;
-  window.open(url, "_blank", "noopener");
-}
-document.getElementById("whatsappBooking").addEventListener("click", () => {
-  if (!form.reportValidity()) return;
-  openWhatsApp(getBookingData());
-});
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (!form.reportValidity()) return;
-  const data = getBookingData();
-  const submitButton = form.querySelector('button[type="submit"]');
-  submitButton.disabled = true;
-  submitButton.textContent = "পাঠানো হচ্ছে...";
-  statusBox.textContent = "";
-  if (!GOOGLE_SCRIPT_URL) {
-    statusBox.textContent = "Google Sheets সংযোগ এখনও সেটআপ হয়নি। WhatsApp দিয়ে বুকিং পাঠানো হচ্ছে...";
-    openWhatsApp(data);
-    submitButton.disabled = false;
-    submitButton.innerHTML = 'বুকিংয়ের অনুরোধ পাঠান <span>→</span>';
-    return;
-  }
-  try {
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+if (menuToggle && mainNav) {
+
+    menuToggle.addEventListener("click", function () {
+        mainNav.classList.toggle("open");
     });
-    statusBox.textContent = "আপনার বুকিংয়ের অনুরোধ পাঠানো হয়েছে। সময় নিশ্চিত করতে আমরা যোগাযোগ করব।";
-    form.reset();
-  } catch (error) {
-    statusBox.textContent = "অনলাইনে পাঠানো যায়নি। WhatsApp দিয়ে বুকিং পাঠানো হচ্ছে...";
-    openWhatsApp(data);
-  } finally {
-    submitButton.disabled = false;
-    submitButton.innerHTML = 'বুকিংয়ের অনুরোধ পাঠান <span>→</span>';
-  }
-});
+
+    mainNav.querySelectorAll("a").forEach(function (link) {
+
+        link.addEventListener("click", function () {
+            mainNav.classList.remove("open");
+        });
+
+    });
+
+}
+
+
+/* ==========================================
+   AUTOMATIC COPYRIGHT YEAR
+========================================== */
+
+const yearElement = document.getElementById("year");
+
+if (yearElement) {
+    yearElement.textContent = new Date().getFullYear();
+}
+
+
+/* ==========================================
+   WHATSAPP BOOKING FUNCTION
+========================================== */
+
+function sendWhatsAppBooking(data) {
+
+    const message =
+`JANA COMMUNICATION - NEW BOOKING
+
+Customer Name: ${data.name}
+Mobile Number: ${data.mobile}
+Service Required: ${data.service}
+Preferred Date: ${data.bookingDate || "Not specified"}
+Preferred Time: ${data.bookingTime || "Not specified"}
+Address: ${data.address || "Not specified"}
+Additional Details: ${data.message || "None"}
+
+Thank you.`;
+
+    const whatsappURL =
+        "https://wa.me/" +
+        WHATSAPP_NUMBER +
+        "?text=" +
+        encodeURIComponent(message);
+
+    window.open(whatsappURL, "_blank", "noopener");
+
+}
+
+
+/* ==========================================
+   ONLINE BOOKING FORM
+========================================== */
+
+const bookingForm = document.getElementById("bookingForm");
+
+const formStatus = document.getElementById("formStatus");
+
+
+if (bookingForm) {
+
+    bookingForm.addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        // FORM VALIDATION
+        if (!bookingForm.reportValidity()) {
+            return;
+        }
+
+        const submitButton =
+            bookingForm.querySelector('button[type="submit"]');
+
+        const formData = new FormData(bookingForm);
+
+        // COLLECT BOOKING INFORMATION
+        const data = {
+
+            name: String(formData.get("name") || "").trim(),
+
+            mobile: String(formData.get("mobile") || "").trim(),
+
+            service: String(formData.get("service") || "").trim(),
+
+            bookingDate: String(formData.get("bookingDate") || ""),
+
+            bookingTime: String(formData.get("bookingTime") || ""),
+
+            address: String(formData.get("address") || "").trim(),
+
+            message: String(formData.get("message") || "").trim()
+
+        };
+
+
+        // VALIDATE CUSTOMER NAME
+        if (!data.name) {
+
+            showStatus("Please enter your full name.", "error");
+
+            return;
+
+        }
+
+
+        // VALIDATE MOBILE NUMBER
+        if (!/^[0-9]{10}$/.test(data.mobile)) {
+
+            showStatus(
+                "Please enter a valid 10-digit mobile number.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        // VALIDATE SERVICE
+        if (!data.service) {
+
+            showStatus("Please select a service.", "error");
+
+            return;
+
+        }
+
+
+        // PREVENT DOUBLE SUBMISSION
+        submitButton.disabled = true;
+
+        submitButton.textContent = "Submitting Booking...";
+
+        showStatus(
+            "Please wait. Your booking request is being submitted...",
+            "normal"
+        );
+
+
+        try {
+
+            // SEND DATA TO GOOGLE APPS SCRIPT
+            // no-cors mode is used for cross-origin submission.
+            // Browser cannot read Google's response in this mode.
+
+            await fetch(GOOGLE_SCRIPT_URL, {
+
+                method: "POST",
+
+                mode: "no-cors",
+
+                headers: {
+
+                    "Content-Type": "text/plain;charset=utf-8"
+
+                },
+
+                body: JSON.stringify(data)
+
+            });
+
+
+            // REQUEST SENT, BUT SHEET ENTRY IS NOT VERIFIED
+            showStatus(
+                "Booking request sent. Please contact us on WhatsApp or phone to confirm your booking.",
+                "success"
+            );
+
+            // RESET FORM
+            bookingForm.reset();
+
+
+            // CREATE WHATSAPP FOLLOW-UP LINK
+            const whatsappButton = document.createElement("button");
+
+            whatsappButton.type = "button";
+
+            whatsappButton.className = "btn btn-primary";
+
+            whatsappButton.textContent = "Also Send Booking on WhatsApp";
+
+            whatsappButton.style.marginTop = "12px";
+
+            whatsappButton.addEventListener("click", function () {
+
+                sendWhatsAppBooking(data);
+
+            });
+
+            if (formStatus) {
+
+                formStatus.appendChild(document.createElement("br"));
+
+                formStatus.appendChild(whatsappButton);
+
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                "JANA COMMUNICATION Booking Error:",
+                error
+            );
+
+            showStatus(
+                "Online booking could not be submitted. Please book through WhatsApp.",
+                "error"
+            );
+
+            // WHATSAPP FALLBACK
+            sendWhatsAppBooking(data);
+
+        } finally {
+
+            submitButton.disabled = false;
+
+            submitButton.innerHTML =
+                'Submit Booking <span>→</span>';
+
+        }
+
+    });
+
+}
+
+
+/* ==========================================
+   FORM STATUS MESSAGE
+========================================== */
+
+function showStatus(message, type) {
+
+    if (!formStatus) return;
+
+    formStatus.textContent = message;
+
+    formStatus.className = "form-status";
+
+    if (type === "success") {
+
+        formStatus.classList.add("success");
+
+    } else if (type === "error") {
+
+        formStatus.classList.add("error");
+
+    }
+
+}
+
+
+/* ==========================================
+   END OF JANA COMMUNICATION JAVASCRIPT
+========================================== */
